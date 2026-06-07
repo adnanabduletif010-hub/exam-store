@@ -1,6 +1,11 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
+import {
+  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+} from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -12,19 +17,20 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase (safe for hot reload: reuse existing app if already initialized)
+// Safe for hot-reload: reuse existing app if already initialized
 const isNewApp = getApps().length === 0;
 const app = isNewApp ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize Firestore – only use initializeFirestore (with offline cache) on first run.
-// On subsequent hot-reloads getApps().length > 0, so we reuse the existing instance.
-const db = isNewApp
-  ? initializeFirestore(app, {
-      localCache: persistentLocalCache({
-        tabManager: persistentMultipleTabManager(),
-      }),
-    })
-  : getFirestore(app);
+// Use persistent offline cache only in the browser.
+// During Vercel SSR/SSG (server-side), browser APIs don't exist — use basic Firestore.
+const db =
+  isNewApp && typeof window !== "undefined"
+    ? initializeFirestore(app, {
+        localCache: persistentLocalCache({
+          tabManager: persistentMultipleTabManager(),
+        }),
+      })
+    : getFirestore(app);
 
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
