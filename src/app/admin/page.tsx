@@ -10,7 +10,7 @@ import {
 import { db } from "@/lib/firebase";
 import { 
   Users, CreditCard, BookOpen, Clock, ShieldCheck, 
-  Plus, Trash2, ArrowLeft, Loader2, Sparkles, Check, X, FileText
+  Plus, Trash2, ArrowLeft, Loader2, Check, X, FileText
 } from "lucide-react";
 import { MOCK_USERS, MOCK_PAYMENTS, MOCK_METHODS } from "@/lib/mockData";
 
@@ -384,9 +384,6 @@ export default function AdminPage() {
           </button>
           <button onClick={() => router.push("/admin/questions")} className="btn-primary">
             <BookOpen size={16} /> Manage Questions
-          </button>
-          <button onClick={() => router.push("/admin/ai")} className="btn-primary glow-btn">
-            <Sparkles size={16} /> AI Ingest Materials
           </button>
         </div>
       </header>
