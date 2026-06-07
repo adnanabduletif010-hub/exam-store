@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { signInWithPopup, signInWithPhoneNumber, RecaptchaVerifier, ConfirmationResult } from "firebase/auth";
-import { auth, googleProvider } from "@/lib/firebase";
+import { auth, googleProvider, isFirebaseConfigured } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { LogIn, Phone, ShieldCheck, Mail, ArrowRight, Loader2, BookOpen, Sparkles, User, ShieldAlert } from "lucide-react";
 
@@ -66,6 +66,11 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = async () => {
+    if (!isFirebaseConfigured) {
+      setError("Google Sign-In is disabled in Demo Mode. To enable it, please add your Firebase credentials to Vercel's Environment Variables.");
+      return;
+    }
+
     if (!isOnline) {
       setError("You are offline. Google Authentication requires an internet connection.");
       return;
