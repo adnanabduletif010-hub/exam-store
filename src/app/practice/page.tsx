@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { getOfflineQuestions, Question } from "@/lib/offlineDb";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { saveQuestionsOffline } from "@/lib/offlineDb";
 import { MOCK_QUESTIONS } from "@/lib/mockData";
 import { 
@@ -172,6 +172,12 @@ export default function PracticePage() {
         return;
       }
       
+      if (!isFirebaseConfigured) {
+        setSyncError("Live cloud syncing is disabled in demo mode.");
+        setSyncing(false);
+        return;
+      }
+
       if (!isOnline) {
         setSyncError("You are offline. Syncing from cloud requires internet connection.");
         setSyncing(false);

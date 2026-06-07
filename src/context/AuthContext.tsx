@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User, onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
+import { auth, db, isFirebaseConfigured } from "@/lib/firebase";
 import { saveUserProfileOffline, getOfflineUserProfile, clearOfflineCache, UserProfile } from "@/lib/offlineDb";
 
 interface AuthContextType {
@@ -51,6 +51,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Listen to Firebase Auth state (runs once on mount - never re-subscribe on network changes)
   useEffect(() => {
+    if (!isFirebaseConfigured) {
+      console.warn("Firebase Auth is not configured. Falling back to cached profile or mock student.");
+      getOfflineUserProfile()
+        .then((cachedProfile) => {
+          if (cachedProfile && cachedProfile.uid.startsWith("mock-")) {
+            setUser({
+              uid: cachedProfile.uid,
+              email: cachedProfile.email,
+              displayName: cachedProfile.displayName,
+            } as any);
+            setProfile(cachedProfile);
+          } else {
+            mockLogin("student");
+          }
+        })
+        .catch(() => {
+          mockLogin("student");
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+      return () => {};
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setLoading(true);
       if (firebaseUser) {

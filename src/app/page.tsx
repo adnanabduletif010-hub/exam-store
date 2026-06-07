@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { saveQuestionsOffline, Question } from "@/lib/offlineDb";
 import { MOCK_QUESTIONS } from "@/lib/mockData";
 import { GraduationCap, LogOut, ArrowRight, Loader2, RefreshCw, AlertCircle, Sparkles } from "lucide-react";
@@ -54,6 +54,30 @@ export default function RootPage() {
       return;
     }
     
+    if (!isFirebaseConfigured) {
+      setSyncing(true);
+      setSyncProgress(10);
+      try {
+        setSyncProgress(40);
+        // Load mock questions matching the selected category
+        const filteredMock = MOCK_QUESTIONS.filter((q) => q.gradeCategory === category);
+        await saveQuestionsOffline(filteredMock as any);
+        setSyncProgress(75);
+        // Save mock category profile updates
+        await updateProfile({ gradeCategory: category } as any);
+        setSyncProgress(100);
+        setTimeout(() => {
+          router.push("/practice");
+        }, 500);
+      } catch (err: any) {
+        console.error("Mock sync failed:", err);
+        setError("Setup failed: " + err.message);
+        setSyncing(false);
+        setSyncProgress(0);
+      }
+      return;
+    }
+
     if (!isOnline) {
       setError("An internet connection is required for the initial setup to download your practice questions.");
       return;

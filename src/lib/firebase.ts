@@ -21,25 +21,31 @@ let app: any;
 let db: any;
 let auth: any;
 let googleProvider: any;
+let isFirebaseConfigured = false;
 
 try {
-  // Safe for hot-reload: reuse existing app if already initialized
-  const isNewApp = getApps().length === 0;
-  app = isNewApp ? initializeApp(firebaseConfig) : getApp();
+  if (firebaseConfig.apiKey) {
+    // Safe for hot-reload: reuse existing app if already initialized
+    const isNewApp = getApps().length === 0;
+    app = isNewApp ? initializeApp(firebaseConfig) : getApp();
 
-  // Use persistent offline cache only in the browser.
-  // During Vercel SSR/SSG (server-side), browser APIs don't exist — use basic Firestore.
-  db =
-    isNewApp && typeof window !== "undefined"
-      ? initializeFirestore(app, {
-          localCache: persistentLocalCache({
-            tabManager: persistentMultipleTabManager(),
-          }),
-        })
-      : getFirestore(app);
+    // Use persistent offline cache only in the browser.
+    // During Vercel SSR/SSG (server-side), browser APIs don't exist — use basic Firestore.
+    db =
+      isNewApp && typeof window !== "undefined"
+        ? initializeFirestore(app, {
+            localCache: persistentLocalCache({
+              tabManager: persistentMultipleTabManager(),
+            }),
+          })
+        : getFirestore(app);
 
-  auth = getAuth(app);
-  googleProvider = new GoogleAuthProvider();
+    auth = getAuth(app);
+    googleProvider = new GoogleAuthProvider();
+    isFirebaseConfigured = true;
+  } else {
+    throw new Error("Firebase API key is missing from environment variables.");
+  }
 } catch (error) {
   console.warn("Firebase initialization failed during build or load:", error);
   // Fallbacks to avoid crashing the build when environment variables are missing
@@ -47,7 +53,8 @@ try {
   db = {} as any;
   auth = {} as any;
   googleProvider = {} as any;
+  isFirebaseConfigured = false;
 }
 
-export { app, db, auth, googleProvider };
+export { app, db, auth, googleProvider, isFirebaseConfigured };
 export default app;
