@@ -17,23 +17,37 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Safe for hot-reload: reuse existing app if already initialized
-const isNewApp = getApps().length === 0;
-const app = isNewApp ? initializeApp(firebaseConfig) : getApp();
+let app: any;
+let db: any;
+let auth: any;
+let googleProvider: any;
 
-// Use persistent offline cache only in the browser.
-// During Vercel SSR/SSG (server-side), browser APIs don't exist — use basic Firestore.
-const db =
-  isNewApp && typeof window !== "undefined"
-    ? initializeFirestore(app, {
-        localCache: persistentLocalCache({
-          tabManager: persistentMultipleTabManager(),
-        }),
-      })
-    : getFirestore(app);
+try {
+  // Safe for hot-reload: reuse existing app if already initialized
+  const isNewApp = getApps().length === 0;
+  app = isNewApp ? initializeApp(firebaseConfig) : getApp();
 
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
+  // Use persistent offline cache only in the browser.
+  // During Vercel SSR/SSG (server-side), browser APIs don't exist — use basic Firestore.
+  db =
+    isNewApp && typeof window !== "undefined"
+      ? initializeFirestore(app, {
+          localCache: persistentLocalCache({
+            tabManager: persistentMultipleTabManager(),
+          }),
+        })
+      : getFirestore(app);
+
+  auth = getAuth(app);
+  googleProvider = new GoogleAuthProvider();
+} catch (error) {
+  console.warn("Firebase initialization failed during build or load:", error);
+  // Fallbacks to avoid crashing the build when environment variables are missing
+  app = {} as any;
+  db = {} as any;
+  auth = {} as any;
+  googleProvider = {} as any;
+}
 
 export { app, db, auth, googleProvider };
 export default app;
